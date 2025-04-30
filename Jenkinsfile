@@ -9,7 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/GuidoAlfaro/Gestion-Calidad-TodoList'
+                git branch: 'main',
+                url: 'https://github.com/GuidoAlfaro/Gestion-Calidad-TodoList.git',
+                credentialsId: 'github-token'
             }
         }
 
