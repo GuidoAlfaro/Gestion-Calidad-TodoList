@@ -17,7 +17,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh './mvnw clean install' // o 'mvn clean install' si no usas wrapper
+                sh 'mvn clean install'
             }
         }
     }
