@@ -39,7 +39,7 @@ pipeline {
             echo 'Pipeline ejecutado con éxito. La aplicación está corriendo en local.'
         }
         failure {
-            echo 'Error en la ejecución del pipeline.'
+            echo 'Error en la ejecución del pipeline. '
         }
     }
 }
