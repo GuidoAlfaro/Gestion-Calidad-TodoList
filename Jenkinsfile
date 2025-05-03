@@ -6,6 +6,10 @@ pipeline {
         jdk 'JDK 17'
     }
 
+    triggers {
+        githubPush()
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -20,11 +24,22 @@ pipeline {
                 sh 'mvn clean install'
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+                sh 'pkill -f "todolist-0.0.1-SNAPSHOT.jar" || true'  // Mata procesos anteriores (para reiniciar)
+                sh 'nohup java -jar target/todolist-0.0.1-SNAPSHOT.jar > app.log 2>&1 &'
+            }
+        }
     }
 
     post {
-        always {
-            echo 'Pipeline finalizado'
+        success {
+            echo 'Pipeline ejecutado con éxito. La aplicación está corriendo en local.'
+        }
+        failure {
+            echo 'Error en la ejecución del pipeline.'
         }
     }
 }
