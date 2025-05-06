@@ -1,7 +1,7 @@
 package bo.edu.ucb.todolist.controller;
 
 import bo.edu.ucb.todolist.entity.Tag;
-import bo.edu.ucb.todolist.dao.TagRepository;
+import bo.edu.ucb.todolist.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

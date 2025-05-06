@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  todolist-db:
+    image: postgres:16
+    container_name: todolist-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: todolist_db
+      POSTGRES_USER: todolist_user
+      POSTGRES_PASSWORD: secret123
+    volumes:
+      - todolist-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - todolist-network
+
+volumes:
+  todolist-data:
+
+networks:
+  todolist-network:
