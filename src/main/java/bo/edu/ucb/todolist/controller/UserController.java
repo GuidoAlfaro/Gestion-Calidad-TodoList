@@ -1,5 +1,7 @@
 package bo.edu.ucb.todolist.controller;
 
+import bo.edu.ucb.todolist.dto.AuthDto;
+import bo.edu.ucb.todolist.dto.ResponseDto;
 import bo.edu.ucb.todolist.entity.Users;
 import bo.edu.ucb.todolist.entity.Task;
 import bo.edu.ucb.todolist.repository.UserRepository;
