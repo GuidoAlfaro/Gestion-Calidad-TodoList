@@ -11,27 +11,27 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/api/tasks")
 public class TaskController {
 
     @Autowired
     private TaskRepository taskRepository;
 
-    // POST /tasks - Create a new task
+    // POST /api/tasks - Create a new task
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
         Task savedTask = taskRepository.save(task);
         return new ResponseEntity<>(savedTask, HttpStatus.CREATED);
     }
 
-    // GET /tasks - Retrieve all tasks
+    // GET /api/tasks - Retrieve all tasks
     @GetMapping
     public ResponseEntity<List<Task>> getAllTasks() {
         List<Task> tasks = taskRepository.findAll();
         return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 
-    // GET /tasks/{id} - Retrieve a task by ID
+    // GET /api/tasks/{id} - Retrieve a task by ID
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         Optional<Task> task = taskRepository.findById(id);
@@ -39,7 +39,7 @@ public class TaskController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // PUT /tasks/{id} - Update a task
+    // PUT /api/tasks/{id} - Update a task
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task taskDetails) {
         Optional<Task> optionalTask = taskRepository.findById(id);
@@ -56,7 +56,7 @@ public class TaskController {
         }
     }
 
-    // DELETE /tasks/{id} - Delete a task
+    // DELETE /api/tasks/{id} - Delete a task
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         if (taskRepository.existsById(id)) {
@@ -65,5 +65,19 @@ public class TaskController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    // GET /api/tasks/status/{status} - Retrieve tasks by status
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Task>> getTasksByStatus(@PathVariable String status) {
+        List<Task> tasks = taskRepository.findByStatus(status); // Asumiendo que TaskRepository tiene este método
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
+    }
+
+    // GET /api/tasks/tag/{tagId} - Retrieve tasks associated with a specific tag
+    @GetMapping("/tag/{tagId}")
+    public ResponseEntity<List<Task>> getTasksByTagId(@PathVariable Long tagId) {
+        List<Task> tasks = taskRepository.findByTagsId(tagId); // Asumiendo que TaskRepository tiene este método
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 }
