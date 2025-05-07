@@ -37,7 +37,7 @@ pipeline {
 
     post {
         success {
-            echo 'Deploy exitoso con Docker.'
+            echo 'Deploy exitoso con Docker. '
         }
         failure {
             echo 'Error en el pipeline.'
