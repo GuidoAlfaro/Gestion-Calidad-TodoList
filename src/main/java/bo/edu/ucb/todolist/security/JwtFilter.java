@@ -4,6 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,19 +27,21 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+            String token = authHeader.substring(7); // Remove "Bearer "
 
-            if (!jwtUtil.validateToken(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+            if (jwtUtil.validateToken(token)) {
+                Long userId = jwtUtil.extractUserId(token);
+
+                // Aquí creamos el objeto de autenticación
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId.toString(), null, null);
+
+                // Y lo seteamos en el contexto de Spring
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            // ✅ Guardamos userId como atributo en la request para usar más tarde
-            Long userId = jwtUtil.extractUserId(token);
-            request.setAttribute("userId", userId);
         }
 
         filterChain.doFilter(request, response);

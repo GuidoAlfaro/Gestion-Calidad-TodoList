@@ -32,8 +32,8 @@ public class JwtUtil {
     }
 
     // Obtener username si lo necesitás
-    public String extractUsername(String token) {
-        return extractAllClaims(token).get("username", String.class);
+    public String extractEmail(String token) {
+        return extractAllClaims(token).get("email", String.class);
     }
 
     // Validar token
