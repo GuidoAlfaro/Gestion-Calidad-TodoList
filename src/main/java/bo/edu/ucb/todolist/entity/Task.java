@@ -31,11 +31,4 @@ public class Task {
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "task_tags",
-            joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    private Set<Tag> tags = new HashSet<>();
 }

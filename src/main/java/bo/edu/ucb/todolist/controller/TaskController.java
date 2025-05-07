@@ -1,12 +1,14 @@
 package bo.edu.ucb.todolist.controller;
 
+import bo.edu.ucb.todolist.dto.ResponseDto;
 import bo.edu.ucb.todolist.dto.TaskDto;
 import bo.edu.ucb.todolist.entity.Task;
 import bo.edu.ucb.todolist.entity.Users;
 import bo.edu.ucb.todolist.repository.TaskRepository;
 import bo.edu.ucb.todolist.repository.UserRepository;
 import bo.edu.ucb.todolist.security.JwtUtil;
-import bo.edu.ucb.todolist.exception.ResourceNotFoundException;
+import bo.edu.ucb.todolist.service.TaskService;
+import bo.edu.ucb.todolist.service.UserService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -26,91 +31,89 @@ public class TaskController {
     private TaskRepository taskRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private TaskService taskService;
 
     // POST /api/tasks - Create a new task
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        Task savedTask = taskRepository.save(task);
-        return new ResponseEntity<>(savedTask, HttpStatus.CREATED);
+    public ResponseEntity<ResponseDto<TaskDto>> createTask(@RequestBody TaskDto taskDto, @RequestHeader("Authorization") String authHeader) {
+        try {
+            log.info("Creating new task");
+            TaskDto createdTask = taskService.createTask(taskDto, authHeader);
+            ResponseDto<TaskDto> response = new ResponseDto<>("Task created successfully", "success", createdTask);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("Error creating task: {}", e.getMessage());
+            ResponseDto<TaskDto> response = new ResponseDto<>("Error creating task", "error:"+e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
-    // GET /api/tasks - Retrieve all tasks for the authenticated user
+    // GET /api/tasks - Retrieve all tasks
+
     @GetMapping
-    public ResponseEntity<List<TaskDto>> getUserTasks(@RequestHeader("Authorization") String authHeader) {
-        JwtUtil jwtUtil = new JwtUtil();
+    public ResponseEntity<ResponseDto<List<TaskDto>>> getUserTasks(@RequestHeader("Authorization") String authHeader) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new ResourceNotFoundException("Token de autorización inválido o ausente");
-            }
-
-            String token = authHeader.substring(7); // quitar "Bearer "
-            String email = jwtUtil.extractEmail(token);
-
-            Users user = userRepository.findByEmail(email);
-            if (user == null) {
-                throw new ResourceNotFoundException("Usuario no encontrado con email: " + email);
-            }
-
-            List<Task> tasks = taskRepository.findByUserId(user.getId());
-            log.info("Tasks retrieved for user: {}", user.getId());
-            List<TaskDto> taskDtos = new ArrayList<>();
-            for (Task task : tasks) {
-                TaskDto taskDto = new TaskDto();
-                taskDto.setId(task.getId());
-                taskDto.setTitle(task.getTitle());
-                taskDto.setDescription(task.getDescription());
-                taskDto.setStatus(task.getStatus());
-                taskDtos.add(taskDto);
-            }
-            return ResponseEntity.ok(taskDtos);
+            log.info("Retrieving tasks for user");
+            ResponseDto<List<TaskDto>> response = new ResponseDto<>("Tasks retrieved successfully", "success", taskService.getAllTasks(authHeader));
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("Error retrieving tasks: {}", e.getMessage());
-            throw e; // Dejamos que GlobalExceptionHandler maneje la excepción
+            ResponseDto<List<TaskDto>> response = new ResponseDto<>("Error retrieving tasks", "error:"+e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+
+
 
     // GET /api/tasks/{id} - Retrieve a task by ID
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea", "id", id));
-        return new ResponseEntity<>(task, HttpStatus.OK);
+        Optional<Task> task = taskRepository.findById(id);
+        return task.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     // PUT /api/tasks/{id} - Update a task
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task taskDetails) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea", "id", id));
-        task.setTitle(taskDetails.getTitle());
-        task.setDescription(taskDetails.getDescription());
-        task.setStatus(taskDetails.getStatus());
-        Task updatedTask = taskRepository.save(task);
-        return new ResponseEntity<>(updatedTask, HttpStatus.OK);
+        Optional<Task> optionalTask = taskRepository.findById(id);
+        if (optionalTask.isPresent()) {
+            Task task = optionalTask.get();
+            task.setTitle(taskDetails.getTitle());
+            task.setDescription(taskDetails.getDescription());
+            task.setStatus(taskDetails.getStatus());
+            // Add other fields as needed
+            Task updatedTask = taskRepository.save(task);
+            return new ResponseEntity<>(updatedTask, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     // DELETE /api/tasks/{id} - Delete a task
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea", "id", id));
-        taskRepository.delete(task);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        if (taskRepository.existsById(id)) {
+            taskRepository.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     // GET /api/tasks/status/{status} - Retrieve tasks by status
     @GetMapping("/status/{status}")
     public ResponseEntity<List<Task>> getTasksByStatus(@PathVariable String status) {
-        List<Task> tasks = taskRepository.findByStatus(status);
+        List<Task> tasks = taskRepository.findByStatus(status); // Asumiendo que TaskRepository tiene este método
         return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 
-    // GET /api/tasks/tag/{tagId} - Retrieve tasks associated with a specific tag
-    @GetMapping("/tag/{tagId}")
-    public ResponseEntity<List<Task>> getTasksByTagId(@PathVariable Long tagId) {
-        List<Task> tasks = taskRepository.findByTagsId(tagId);
-        return new ResponseEntity<>(tasks, HttpStatus.OK);
-    }
+//    // GET /api/tasks/tag/{tagId} - Retrieve tasks associated with a specific tag
+//    @GetMapping("/tag/{tagId}")
+//    public ResponseEntity<List<Task>> getTasksByTagId(@PathVariable Long tagId) {
+//        List<Task> tasks = taskRepository.findByTagsId(tagId); // Asumiendo que TaskRepository tiene este método
+//        return new ResponseEntity<>(tasks, HttpStatus.OK);
+//    }
 }

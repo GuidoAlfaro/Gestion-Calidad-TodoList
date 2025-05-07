@@ -49,4 +49,34 @@ public class UserService {
         return new UserDto(savedUser.getUsername(), savedUser.getEmail(), null);
     }
 
+    public Users getUserByEmail(String email) {
+        log.info("Retrieving user by email: {}", email);
+        Users user = userRepository.findByEmail(email);
+        if (user == null) {
+            log.error("User not found: {}", email);
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        return user;
+    }
+
+    public Users validateToken(String authHeader) {
+        JwtUtil jwtUtil = new JwtUtil();
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new RuntimeException("Token inválido");
+            }
+
+            String token = authHeader.substring(7);
+            String email = jwtUtil.extractEmail(token);
+            Users user = getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("Usuario no encontrado");
+            }
+
+            return user;
+        } catch (Exception e) {
+            throw new RuntimeException("Error al verificar el token", e);
+        }
+    }
+
 }

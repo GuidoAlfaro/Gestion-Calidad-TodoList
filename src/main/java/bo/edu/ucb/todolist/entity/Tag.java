@@ -18,6 +18,4 @@ public class Tag {
 
     private String name;
 
-    @ManyToMany(mappedBy = "tags")
-    private Set<Task> tasks = new HashSet<>();
 }
