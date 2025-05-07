@@ -59,4 +59,24 @@ public class UserService {
         return user;
     }
 
+    public Users validateToken(String authHeader) {
+        JwtUtil jwtUtil = new JwtUtil();
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new RuntimeException("Token inválido");
+            }
+
+            String token = authHeader.substring(7);
+            String email = jwtUtil.extractEmail(token);
+            Users user = getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("Usuario no encontrado");
+            }
+
+            return user;
+        } catch (Exception e) {
+            throw new RuntimeException("Error al verificar el token", e);
+        }
+    }
+
 }

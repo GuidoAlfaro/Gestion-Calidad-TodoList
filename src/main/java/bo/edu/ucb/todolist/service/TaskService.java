@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -22,6 +21,8 @@ public class TaskService {
     @Autowired
     private UserService userService;
     @Autowired
+    private TaskTagsService taskTagsService;
+    @Autowired
     private TaskTagRepository taskTagRepository;
     @Autowired
     private TagService tagService;
@@ -29,17 +30,7 @@ public class TaskService {
     public List<TaskDto> getAllTasks(String authHeader) {
         JwtUtil jwtUtil = new JwtUtil();
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new RuntimeException("Token inválido");
-            }
-
-            String token = authHeader.substring(7);
-            String email = jwtUtil.extractEmail(token);
-            Users user = userService.getUserByEmail(email);
-
-            if (user == null) {
-                throw new RuntimeException("Usuario no encontrado");
-            }
+            Users user = userService.validateToken(authHeader);
 
             // Usamos la query con JOIN FETCH
             List<TaskTag> taskTags = taskTagRepository.findTaskTagsByUserId(user.getId());
@@ -76,63 +67,43 @@ public class TaskService {
         }
     }
 
-//    public TaskDto createTask(TaskDto taskDto, String authHeader) {
-//        JwtUtil jwtUtil = new JwtUtil();
-//        try {
-//            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//                throw new RuntimeException("Token inválido");
-//            }
-//
-//            String token = authHeader.substring(7);
-//            String email = jwtUtil.extractEmail(token);
-//            Users user = userService.getUserByEmail(email);
-//
-//            if (user == null) {
-//                throw new RuntimeException("Usuario no encontrado");
-//            }
-//
-//            Task task = new Task();
-//            task.setTitle(taskDto.getTitle());
-//            task.setDescription(taskDto.getDescription());
-//            task.setDueDate(taskDto.getDueDate());
-//            task.setStatus(taskDto.getStatus());
-//            task.setUser(user);
-//
-//
-//            //Task savedTask = taskRepository.save(task);
-//
-//            List<Tag> tags = taskDto.getTags().stream()
-//                    .map(tagDto -> {
-//                        Tag tag = tagService.findByName(tagDto.getName());
-//                        if (tag == null) {
-//                            tag = new Tag();
-//                            tag.setName(tagDto.getName());
-//                        }
-//                        return tag;
-//                    })
-//                    .toList();
-//
-//
-//
-//
-//
-//            // Guardar las etiquetas
-//            for (TagDto tagDto : taskDto.getTags()) {
-//                Tag tag = new Tag();
-//                tag.setName(tagDto.getName());
-//                tag = taskTagRepository.save(tag); // Guardar la etiqueta
-//
-//                TaskTag taskTag = new TaskTag();
-//                taskTag.setTask(savedTask);
-//                taskTag.setTag(tag);
-//                taskTagRepository.save(taskTag);
-//            }
-//
-//            return new TaskDto(savedTask.getId(), savedTask.getTitle(), savedTask.getDescription(), savedTask.getDueDate(), savedTask.getCreatedAt(), savedTask.getStatus(), taskDto.getTags());
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException("Error al crear tarea", e);
-//        }
-//    }
+    public TaskDto createTask(TaskDto taskDto, String authHeader) {
+        try {
+            Users user = userService.validateToken(authHeader);
+
+            Task task = new Task();
+            task.setTitle(taskDto.getTitle());
+            task.setDescription(taskDto.getDescription());
+            task.setDueDate(taskDto.getDueDate());
+            task.setStatus(taskDto.getStatus());
+            task.setUser(user);
+
+            Task savedTask = taskRepository.save(task);
+
+            // Obtener id de las etiquetas
+            List<Tag> tags = taskDto.getTags().stream()
+                    .map(tagDto -> {
+                        Tag tag = tagService.findByName(tagDto.getName());
+                        if (tag == null) {
+                            tag = new Tag();
+                            tag.setName(tagDto.getName());
+                        }
+                        return tag;
+                    })
+                    .toList();
+            // Guardar las etiquetas de la tarea en la base de datos
+            for (Tag tag : tags) {
+                TaskTag taskTag = new TaskTag();
+                taskTag.setTask(savedTask);
+                taskTag.setTag(tag);
+                taskTagsService.createTaskTag(taskTag);
+            }
+
+            return new TaskDto(savedTask.getId(), savedTask.getTitle(), savedTask.getDescription(), savedTask.getDueDate(), savedTask.getCreatedAt(), savedTask.getStatus(), taskDto.getTags());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al crear tarea", e);
+        }
+    }
 
 }

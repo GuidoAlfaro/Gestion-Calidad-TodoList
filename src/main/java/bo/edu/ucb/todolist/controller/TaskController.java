@@ -35,9 +35,17 @@ public class TaskController {
 
     // POST /api/tasks - Create a new task
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        Task savedTask = taskRepository.save(task);
-        return new ResponseEntity<>(savedTask, HttpStatus.CREATED);
+    public ResponseEntity<ResponseDto<TaskDto>> createTask(@RequestBody TaskDto taskDto, @RequestHeader("Authorization") String authHeader) {
+        try {
+            log.info("Creating new task");
+            TaskDto createdTask = taskService.createTask(taskDto, authHeader);
+            ResponseDto<TaskDto> response = new ResponseDto<>("Task created successfully", "success", createdTask);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("Error creating task: {}", e.getMessage());
+            ResponseDto<TaskDto> response = new ResponseDto<>("Error creating task", "error:"+e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     // GET /api/tasks - Retrieve all tasks
