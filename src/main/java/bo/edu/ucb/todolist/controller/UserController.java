@@ -78,7 +78,6 @@ public class UserController {
             Users user = optionalUser.get();
             user.setUsername(userDetails.getUsername()); // Asumiendo que User tiene un campo username
             user.setEmail(userDetails.getEmail());       // Asumiendo que User tiene un campo email
-            // Actualiza otros campos según la entidad User
             Users updatedUser = userRepository.save(user);
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
         } else {
