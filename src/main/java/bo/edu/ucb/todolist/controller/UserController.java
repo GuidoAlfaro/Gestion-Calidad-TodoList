@@ -9,6 +9,7 @@ import bo.edu.ucb.todolist.repository.UserRepository;
 import bo.edu.ucb.todolist.repository.TaskRepository;
 import bo.edu.ucb.todolist.service.UserService;
 import bo.edu.ucb.todolist.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    private static Logger log = org.slf4j.LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -36,9 +39,12 @@ public class UserController {
             AuthDto authResponse = userService.login(authDto);
             ResponseDto<AuthDto> response = new ResponseDto<>("Login successful", "success", authResponse);
             return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            log.error("Login failed: {}", e.getMessage());
+            throw e; // Re-lanzar para que GlobalExceptionHandler lo maneje
         } catch (Exception e) {
-            ResponseDto<AuthDto> response = new ResponseDto<>("Login failed: " + e.getMessage(), "error", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            log.error("Login failed: {}", e.getMessage());
+            throw e; // Re-lanzar para que GlobalExceptionHandler lo maneje
         }
     }
 
@@ -49,9 +55,12 @@ public class UserController {
             UserDto createdUser = userService.createUser(userDto);
             ResponseDto<UserDto> response = new ResponseDto<>("User created successfully", "success", createdUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (ResourceNotFoundException e) {
+            log.error("Error creating user: {}", e.getMessage());
+            throw e; // Re-lanzar para que GlobalExceptionHandler lo maneje
         } catch (Exception e) {
-            ResponseDto<UserDto> response = new ResponseDto<>("Error creating user: " + e.getMessage(), "error", null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            log.error("Error creating user: {}", e.getMessage());
+            throw e; // Re-lanzar para que GlobalExceptionHandler lo maneje
         }
     }
 
