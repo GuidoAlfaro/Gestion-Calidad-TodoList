@@ -17,7 +17,7 @@ public class TagService {
         try {
             List<Tag> tags = tagRepository.findAll();
             return tags.stream()
-                    .map(tag -> new TagDto(tag.getId(), tag.getName()))
+                    .map(tag -> new TagDto(tag.getName()))
                     .toList();
         } catch (Exception e) {
             throw new RuntimeException("Error fetching tags", e);
@@ -29,7 +29,7 @@ public class TagService {
             Tag tag = new Tag();
             tag.setName(tagDto.getName());
             Tag savedTag = tagRepository.save(tag);
-            return new TagDto(savedTag.getId(), savedTag.getName());
+            return new TagDto(savedTag.getName());
         } catch (Exception e) {
             throw new RuntimeException("Error creating tag", e);
         }
@@ -40,7 +40,7 @@ public class TagService {
             Tag tag = tagRepository.findById(id).orElseThrow(() -> new RuntimeException("Tag not found"));
             tag.setName(tagDto.getName());
             Tag updatedTag = tagRepository.save(tag);
-            return new TagDto(updatedTag.getId(), updatedTag.getName());
+            return new TagDto(updatedTag.getName());
         } catch (Exception e) {
             throw new RuntimeException("Error updating tag", e);
         }
@@ -52,6 +52,14 @@ public class TagService {
             tagRepository.delete(tag);
         } catch (Exception e) {
             throw new RuntimeException("Error deleting tag", e);
+        }
+    }
+
+    public Tag findByName(String name) {
+        try {
+            return tagRepository.findByName(name);
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching tags by name", e);
         }
     }
 }

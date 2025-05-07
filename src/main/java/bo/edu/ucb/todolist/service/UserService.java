@@ -49,4 +49,14 @@ public class UserService {
         return new UserDto(savedUser.getUsername(), savedUser.getEmail(), null);
     }
 
+    public Users getUserByEmail(String email) {
+        log.info("Retrieving user by email: {}", email);
+        Users user = userRepository.findByEmail(email);
+        if (user == null) {
+            log.error("User not found: {}", email);
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        return user;
+    }
+
 }
