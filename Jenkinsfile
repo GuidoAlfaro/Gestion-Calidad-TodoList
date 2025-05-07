@@ -41,7 +41,7 @@ pipeline {
 
     post {
         success {
-            echo 'Deploy exitoso con Docker. El contenedor está corriendo en el puerto 8081.'
+            echo 'Deploy exitoso con Docker. El contenedor está corriendo en el puerto 8081. '
         }
         failure {
             echo 'Error en el pipeline.'
