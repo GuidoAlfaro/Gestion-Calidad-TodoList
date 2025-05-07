@@ -12,13 +12,13 @@ public class JwtUtil {
 
     private static final String SECRET_KEY = "/5tcpfy7OJ1bnC2FoDa/kZ7kP3hZH1FM+zBOfd6GEbmbfAScsQTjI4eHhNJGm41bosoyMZ6Sf5qyPa/3rXxf0w==";
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private static final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
     // Generar el token
-    public String generateToken(Long userId, String username) {
+    public static String generateToken(Long userId, String email) {
         return Jwts.builder()
                 .setSubject(userId.toString())
-                .claim("username", username)
+                .claim("email", email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 horas
                 .signWith(key, SignatureAlgorithm.HS256)

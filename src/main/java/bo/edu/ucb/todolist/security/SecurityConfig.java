@@ -31,7 +31,8 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(auth -> auth
                         // Solo permitir el login sin autenticación
-                        .requestMatchers("/api/v1/users/auth").permitAll()
+                        .requestMatchers("/api/users/auth").permitAll()
+                        .requestMatchers("/api/users/new").permitAll()
                         // Todas las demás rutas requieren autenticación
                         .anyRequest().authenticated()
                 )

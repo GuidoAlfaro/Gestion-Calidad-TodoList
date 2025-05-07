@@ -2,10 +2,12 @@ package bo.edu.ucb.todolist.controller;
 
 import bo.edu.ucb.todolist.dto.AuthDto;
 import bo.edu.ucb.todolist.dto.ResponseDto;
+import bo.edu.ucb.todolist.dto.UserDto;
 import bo.edu.ucb.todolist.entity.Users;
 import bo.edu.ucb.todolist.entity.Task;
 import bo.edu.ucb.todolist.repository.UserRepository;
 import bo.edu.ucb.todolist.repository.TaskRepository;
+import bo.edu.ucb.todolist.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +26,33 @@ public class UserController {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/auth")
+    public ResponseEntity<ResponseDto<AuthDto>> login(@RequestBody AuthDto authDto) {
+        try {
+            AuthDto authResponse = userService.login(authDto);
+            ResponseDto<AuthDto> response = new ResponseDto<>("Login successful", "success", authResponse);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ResponseDto<AuthDto> response = new ResponseDto<>("Login failed:"+e.getMessage(), "error", null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+
     // POST /api/users - Create a new user
-    @PostMapping
-    public ResponseEntity<Users> createUser(@RequestBody Users user) {
-        Users savedUser = userRepository.save(user);
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+    @PostMapping("/new")
+    public ResponseEntity<ResponseDto<UserDto>> createUser(@RequestBody UserDto userDto) {
+        try {
+            UserDto createdUser = userService.createUser(userDto);
+            ResponseDto<UserDto> response = new ResponseDto<>("User created successfully", "success", createdUser);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            ResponseDto<UserDto> response = new ResponseDto<>("Error creating user: " + e.getMessage(), "error", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     // GET /api/users - Retrieve all users
@@ -52,7 +76,7 @@ public class UserController {
         Optional<Users> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
             Users user = optionalUser.get();
-            user.setName(userDetails.getName()); // Asumiendo que User tiene un campo username
+            user.setUsername(userDetails.getUsername()); // Asumiendo que User tiene un campo username
             user.setEmail(userDetails.getEmail());       // Asumiendo que User tiene un campo email
             // Actualiza otros campos según la entidad User
             Users updatedUser = userRepository.save(user);
