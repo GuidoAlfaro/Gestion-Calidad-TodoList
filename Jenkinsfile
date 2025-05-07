@@ -7,7 +7,7 @@ pipeline {
     }
 
     triggers {
-            githubPush()
+        githubPush()
     }
 
     stages {
@@ -25,26 +25,21 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Run') {
+        stage('Deploy') {
             steps {
-                echo 'Construyendo imagen Docker...'
-                sh 'docker build -t todolist-backend .'
-
-                echo 'Parando contenedor anterior si existe...'
-                sh 'docker rm -f todolist-backend || true'
-
-                echo 'Iniciando nuevo contenedor...'
-                sh 'docker run -d --name todolist-backend -p 8081:8081 todolist-backend'
+                echo 'Deploying application...'
+                sh 'pkill -f "todolist-0.0.1-SNAPSHOT.jar" || true'  // Mata procesos anteriores (para reiniciar)
+                sh 'java -jar target/todolist-0.0.1-SNAPSHOT.jar & echo $! > app.pid' // Ejecuta en background y guarda el PID
             }
         }
     }
 
     post {
         success {
-            echo 'Deploy exitoso con Docker. El contenedor está corriendo en el puerto 8081. '
+            echo 'Pipeline ejecutado con éxito. La aplicación está corriendo en local.'
         }
         failure {
-            echo 'Error en el pipeline.'
+            echo 'Error en la ejecución del pipeline.'
         }
     }
 }
