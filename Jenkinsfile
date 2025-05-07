@@ -6,10 +6,6 @@ pipeline {
         jdk 'JDK 17'
     }
 
-    triggers {
-        githubPush()
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -25,21 +21,26 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Docker Build & Run') {
             steps {
-                echo 'Deploying application...'
-                sh 'pkill -f "todolist-0.0.1-SNAPSHOT.jar" || true'  // Mata procesos anteriores (para reiniciar)
-                sh 'nohup java -jar target/todolist-0.0.1-SNAPSHOT.jar > app.log 2>&1 &'
+                echo 'Construyendo imagen Docker...'
+                sh 'docker build -t todolist-backend .'
+
+                echo 'Parando contenedor anterior si existe...'
+                sh 'docker rm -f todolist-backend || true'
+
+                echo 'Iniciando nuevo contenedor...'
+                sh 'docker run -d --name todolist-backend -p 8081:8081 todolist-backend'
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline ejecutado con éxito. La aplicación está corriendo en local.'
+            echo 'Deploy exitoso con Docker.'
         }
         failure {
-            echo 'Error en la ejecución del pipeline.'
+            echo 'Error en el pipeline.'
         }
     }
 }
