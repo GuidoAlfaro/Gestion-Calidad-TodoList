@@ -5,7 +5,7 @@ FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
 # Copia el JAR generado (ajusta el nombre si es diferente)
-COPY target/todolist-0.0.1-SNAPSHOT.jar app.jar
+COPY todolist-0.0.1-SNAPSHOT.jar app.jar
 
 # Expón el puerto donde corre Spring Boot
 EXPOSE 8081

@@ -28,8 +28,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying application...'
-                sh 'pkill -f "todolist-0.0.1-SNAPSHOT.jar" || true'  // Mata procesos anteriores (para reiniciar)
-                sh 'java -jar target/todolist-0.0.1-SNAPSHOT.jar & echo $! > app.pid' // Ejecuta en background y guarda el PID
+                sh 'pkill -f "todolist-0.0.1-SNAPSHOT.jar" || true'
+                sh 'java -jar target/todolist-0.0.1-SNAPSHOT.jar & echo $! > app.pid'
             }
         }
     }
